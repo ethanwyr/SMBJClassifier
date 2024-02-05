@@ -1,0 +1,17 @@
+1 = COVID_Alpha/MisMatch_1/Vbias_100mV_Amp_1nAV_RampRate_5_Freq_10kHz/
+2 = COVID_Alpha/MisMatch_1/Vbias_150mV_Amp_10nAV_RampRate_3_Freq_10kHz/
+3 = COVID_Alpha/MisMatch_1/Vbias_100mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+4 = COVID_Alpha/MisMatch_1/Vbias_150mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+5 = COVID_Alpha/MisMatch_1/Vbias_200mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+
+6 = COVID_Alpha/MisMatch_2/Vbias_150mV_Amp_1nAV_RampRate_3_Freq_10kHz/
+7 = COVID_Alpha/MisMatch_2/Vbias_100mV_Amp_1nAV_RampRate_10_Freq_10kHz/
+8 = COVID_Alpha/MisMatch_2/Vbias_100mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+9 = COVID_Alpha/MisMatch_2/Vbias_150mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+10 = COVID_Alpha/MisMatch_2/Vbias_200mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+
+11 = COVID_Alpha/PerfectMatch/Vbias_50mV_Amp_1nAV_RampRate_3_Freq_10kHz/
+12 = COVID_Alpha/PerfectMatch/Vbias_100mV_Amp_1nAV_RampRate_3_Freq_10kHz/
+13 = COVID_Alpha/PerfectMatch/Vbias_100mV_Amp_1nAV_RampRate_20_Freq_10kHz/
+14 = COVID_Alpha/PerfectMatch/Vbias_100mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+15 = COVID_Alpha/PerfectMatch/Vbias_200mV_Amp_10nAV_RampRate_10_Freq_10kHz/
