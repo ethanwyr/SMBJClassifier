@@ -56,7 +56,7 @@ def readInfo(filename, Expfile):
 
     return data, Amp, Freq, RR, Vbias
 
-def R2Filter(data, drange=0):
+def R2Filter(data, drange=None):
     """ generate R square values for each Dataset
     Fit each current trace to an exponential decay curve and compute its R square value 
     Read 'Data_A.mat' of each Dataset
@@ -71,7 +71,7 @@ def R2Filter(data, drange=0):
 
     """
     # If user not specified, assign `data` length as loop range
-    if drange == 0:
+    if drange is None:
         drange = range(len(data))
     warnings.filterwarnings("ignore")
 
@@ -172,7 +172,7 @@ def LPF_30kHz():
              
     return lpf
 
-def LPF(data, drange=0, highCurrent=10.0, lowCurrent=0.001):
+def LPF(data, drange=None, highCurrent=10.0, lowCurrent=0.001):
     """ Create a Low Pass Filter (LPF) and apply it to each current traces
     Read 'Data_A.mat' of each Dataset
     Save the filtered data in 'Data_A_LPF.mat' under the directory of each Dataset
@@ -190,7 +190,7 @@ def LPF(data, drange=0, highCurrent=10.0, lowCurrent=0.001):
 
     """
     # If user not specified, assign `data` length as loop range
-    if drange == 0:
+    if drange is None:
         drange = range(len(data))
 
     # loop through each Dataset    
@@ -207,6 +207,7 @@ def LPF(data, drange=0, highCurrent=10.0, lowCurrent=0.001):
                 temp = Data_A[i][:, 1] 
                 temp = np.append(np.ones([100])*temp[1], temp)
                 current = signal.lfilter(LPF_10kHz(), 1, temp)
+                current = current[100:]
 
                 # Perform low and high clip 
                 cutoffH = np.where(current > highCurrent)[0]
@@ -218,16 +219,17 @@ def LPF(data, drange=0, highCurrent=10.0, lowCurrent=0.001):
                     cutoff = idx[-1] 
                     if len(idx) > 3:
                         cutoff = idx[2] + 1
-                current = current[:cutoff]
 
                 # Create one low pass filtered trace
-                Data_A_LPF[i] = np.transpose([Data_A[i][:len(current), 0], current])
+                current = np.array([current[:cutoff]])
+                time = np.array([Data_A[i][:len(current[0]), 0]])
+                Data_A_LPF[i] = np.append(time.T, current.T, axis=1)
 
             # save low pass filtered traces of one Dataset
             Data_A_LPF = np.array(Data_A_LPF, dtype=object)
             savemat('./Data/' + data[d] + 'Data_A_LPF.mat', {'Data_A_LPF':Data_A_LPF}) 
 
-def R2_LPF(data, Amp, Vbias, drange=0, rs_range=range(95, 96)):
+def R2_LPF(data, Amp, Vbias, drange=None, rs_range=range(95, 96)):
     """ Convert current traces into conductance traces 
     by applying an R square cutoff and low pass filter 
     Read 'Data_A_LPF.mat' of each Dataset
@@ -249,7 +251,7 @@ def R2_LPF(data, Amp, Vbias, drange=0, rs_range=range(95, 96)):
 
     """
     # If user not specified, assign `data` length as loop range
-    if drange == 0:
+    if drange is None:
         drange = range(len(data))
 
     G0 = 7.748091729 * 10**(-5) # conductance quantum in unit of S 
@@ -280,7 +282,7 @@ def R2_LPF(data, Amp, Vbias, drange=0, rs_range=range(95, 96)):
                 Data_LPF = np.array(Data_LPF[:k], dtype=object)
                 savemat('./Data/' + data[d] + 'Data_LPF_R' + str(rs) + '.mat', {'Data_LPF':Data_LPF}) 
 
-def createCondTrace(data, Amp, Freq, Vbias):
+def createCondTrace(data, Amp, Freq, Vbias, drange=None):
     """ Perform data preprocessing
     Convert current traces into conductance traces by applying high/low clip,
     R square value cutoff, and low pass filter. 
@@ -296,11 +298,13 @@ def createCondTrace(data, Amp, Freq, Vbias):
         1D array with experimental parameters "Sampling Frequency" for each Dataset
     Vbias: numpy array
         1D array with experimental parameters "Voltage Bias" for each Dataset
+    drange: list of integer 
+        Specify the indexes for each Dataset needed to generate conductance traces 
 
     """
     print('Generating R square value ...')
-    R2Filter(data, drange=range(0,2))
+    R2Filter(data, drange)
     print('Generating date with LPF ...')
-    LPF(data, drange=range(0,2))
-    R2_LPF(data, Amp, Vbias, drange=range(0,2))
+    LPF(data, drange)
+    R2_LPF(data, Amp, Vbias, drange)
     print('Finish.')
