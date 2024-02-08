@@ -1,0 +1,7 @@
+keras>=3.0.0
+matplotlib.=3.8.0
+numpy>=1.26.0
+scikit_learn>=1.4.0
+scipy>=1.12.0
+tensorflow>=2.15.0
+xgboost>=2.0.0

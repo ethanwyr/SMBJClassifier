@@ -57,7 +57,7 @@ def readInfo(filename, Expfile):
     return data, Amp, Freq, RR, Vbias
 
 def R2Filter(data, drange=None):
-    """ generate R square values for each Dataset
+    """ Generate R square values for each Dataset
     Fit each current trace to an exponential decay curve and compute its R square value 
     Read 'Data_A.mat' of each Dataset
     Save the R square values in 'Parameter.mat' under the directory of each Dataset

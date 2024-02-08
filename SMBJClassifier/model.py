@@ -383,19 +383,22 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
     """
     # Define the parameters for the approach
     approach = int(approach)
-    match approach:
-        case 1: # Approach A1 is 1D histograms with XGBoost model
-            averageHist = False
-            dimension = 1
-        case 2: # Approach A2 is 1D averaged histograms with XGBoost model
-            averageHist = True
-            dimension = 1
-        case 3: # Approach A3 is 2D histograms with XGBoost+CNN model
-            averageHist = False
-            dimension = 2
-        case 4: # Approach A4 is 2D averaged histograms with XGBoost+CNN model
-            averageHist = True
-            dimension = 2
+    if approach == 1:
+        # Approach A1 is 1D histograms with XGBoost model
+        averageHist = False
+        dimension = 1
+    elif approach == 2: 
+        # Approach A2 is 1D averaged histograms with XGBoost model
+        averageHist = True
+        dimension = 1
+    elif approach == 3: 
+        # Approach A3 is 2D histograms with XGBoost+CNN model
+        averageHist = False
+        dimension = 2
+    elif approach == 4: 
+        # Approach A4 is 2D averaged histograms with XGBoost+CNN model
+        averageHist = True
+        dimension = 2
 
     # Perform the same classification model for 100 iterations
     print('Start classification ...')
