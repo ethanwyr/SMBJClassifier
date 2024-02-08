@@ -205,7 +205,7 @@ def LPF(data, drange=None, highCurrent=10.0, lowCurrent=0.001):
             for i in range(len(Data_A)):
                 # Apply LPF to the data
                 temp = Data_A[i][:, 1] 
-                temp = np.append(np.ones([100])*temp[1], temp)
+                temp = np.append(np.ones([100])*temp[0], temp)
                 current = signal.lfilter(LPF_10kHz(), 1, temp)
                 current = current[100:]
 

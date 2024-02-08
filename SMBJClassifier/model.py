@@ -6,13 +6,13 @@ turning ML model hyper parameters, and application of XGBoost/CNN+XGBoost
 """
 import numpy as np
 from scipy.io import loadmat, savemat
-from scipy import signal, optimize
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.metrics import confusion_matrix
 from xgboost import XGBClassifier
-import tensorflow as tf
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization
-from tensorflow.keras.models import Model, Sequential
+import tensorflow
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization
+from keras.models import Model, Sequential, load_model
+from keras.callbacks import ModelCheckpoint
 
 def generate_1d_histogram(data, RR, d, inputName, para, 
                           TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum):
@@ -57,7 +57,7 @@ def generate_1d_histogram(data, RR, d, inputName, para,
     for i in d:
         # load conductance traces of one Dataset
         # split the data into training and testing traces 
-        matData = loadmat('./Data/' + data[i] + inputName + '_' + para + '.mat')
+        matData = loadmat('./Data/' + data[int(i)] + inputName + '_' + para + '.mat')
         Data_LPF = matData['Data_LPF'][0]
         ctr, cte = train_test_split(Data_LPF, test_size=TEST_FRACTION)
         cond_train.extend(ctr)
@@ -141,13 +141,13 @@ def generate_2d_histogram(data, RR, d, inputName, para,
     for i in d:
         # load conductance traces of one Dataset
         # split the data into training and testing traces 
-        matData = loadmat('./Data/' + data[i] + inputName + '_' + para + '.mat')
+        matData = loadmat('./Data/' + data[int(i)] + inputName + '_' + para + '.mat')
         Data_LPF = matData['Data_LPF'][0]
         ctr, cte = train_test_split(Data_LPF, test_size=TEST_FRACTION)
         cond_train.extend(ctr)
         cond_test.extend(cte)
-        dist_train.extend([np.arange(len(c1[0])) * 1e-4 * RR[i] for c1 in ctr])
-        dist_test.extend([np.arange(len(c2[0])) * 1e-4 * RR[i] for c2 in cte])
+        dist_train.extend([np.arange(len(c1[0])) * 1e-4 * RR[int(i)] for c1 in ctr])
+        dist_test.extend([np.arange(len(c2[0])) * 1e-4 * RR[int(i)] for c2 in cte])
         
     
     # create a random number generator
@@ -189,7 +189,7 @@ def generate_2d_histogram(data, RR, d, inputName, para,
     
     return data_train_hist, data_test_hist
 
-def histData(data, RR, group, groupLabel, averageHist, dimension, sampleNum):
+def histData(data, RR, group, num_group, averageHist, dimension, sampleNum):
     """ Generate Training Data & Label, Testing Data & Label in format of 1D/2D conductance histograms
     
     Parameters
@@ -200,9 +200,9 @@ def histData(data, RR, group, groupLabel, averageHist, dimension, sampleNum):
         1D array with experimental parameters "Ramp Rate" for each Dataset
     group: list of integer
         2D array with the indexes of Datasets that are prepared for classification 
-    groupLabel: list of integer
-        1D array with the labels of Datasets that are prepared for classification
-        Several Datasets can have the same label
+    num_group: integer
+        Number of groups that are prepared for classification
+        Several Datasets (under the same group) can have the same label 
     averageHist: boolean
         True, if creating averaged conductance histograms
     dimension: integer 
@@ -224,6 +224,10 @@ def histData(data, RR, group, groupLabel, averageHist, dimension, sampleNum):
         1D array with labels of testing data
 
     """
+    num_group = int(num_group)
+    dimension = int(dimension)
+    sampleNum = int(sampleNum)
+
     ## Define the following parameters for constructing histograms 
     inputName = 'Data_LPF'    # Name of data files that contain the preprocessed conductance traces
     R2_value = 'R95'          # R square value for classification 
@@ -258,33 +262,38 @@ def histData(data, RR, group, groupLabel, averageHist, dimension, sampleNum):
     Test_Label = []
     if averageHist:
         # Create averaged (probability distribution of) conductance histograms across several Datasets within the same variant
-        for gl in groupLabel:
-            data_train_hist, data_test_hist = fun_hist(data, RR, group[gl], inputName, R2_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
+        for g in range(num_group):
+            data_train_hist, data_test_hist = fun_hist(data, RR, group[g], inputName, R2_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
             Train_Data.extend(data_train_hist)
-            Train_Label.extend(np.ones(len(data_train_hist), dtype=np.integer) * groupLabel[gl])
+            Train_Label.extend(np.ones(len(data_train_hist), dtype=np.integer) * g)
             Test_Data.extend(data_test_hist)
-            Test_Label.extend(np.ones(len(data_test_hist), dtype=np.integer) * groupLabel[gl])
+            Test_Label.extend(np.ones(len(data_test_hist), dtype=np.integer) * g)
     else:
         # Create individual conductance histograms for each Dataset within the same variant
-        for gl in groupLabel:
-            for d in group[gl]:
+        for g in range(num_group):
+            for d in group[g]:
                 data_train_hist, data_test_hist = fun_hist(data, RR, [d], inputName, R2_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
                 Train_Data.extend(data_train_hist)
-                Train_Label.extend(np.ones(len(data_train_hist), dtype=np.integer) * groupLabel[gl])
+                Train_Label.extend(np.ones(len(data_train_hist), dtype=np.integer) * g)
                 Test_Data.extend(data_test_hist)
-                Test_Label.extend(np.ones(len(data_test_hist), dtype=np.integer) * groupLabel[gl])
+                Test_Label.extend(np.ones(len(data_test_hist), dtype=np.integer) * g)
 
+    Train_Data = np.array(Train_Data)
+    Train_Label = np.array(Train_Label)
+    Test_Data = np.array(Test_Data)
+    Test_Label = np.array(Test_Label)
     return Train_Data, Train_Label, Test_Data, Test_Label
 
-def cnn(input_shape, num_class):
+def cnn(input_shape, num_group):
     """ The CNN model used in approach A3 and approach A4
 
     Parameters
     ----------
     input_shape: numpy array
         1D array with the shape of input data for CNN model
-    num_class: integer 
-        Number of classes (i.e. labels of Datasets) that are prepared for classification
+    num_group: integer 
+        Number of groups that are prepared for classification
+        Several Datasets (under the same group) can have the same label
     
     Returns
     -------
@@ -304,26 +313,64 @@ def cnn(input_shape, num_class):
         Dense(64, activation = 'relu',name='dense_1'),
         Dense(128, activation = 'relu',name='dense_2')
     ])
-    cnn_model.add(Dense(num_class, activation = 'softmax', name = 'dense_classification'))
+    cnn_model.add(Dense(num_group, activation = 'softmax', name = 'dense_classification'))
     cnn_model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return cnn_model
 
-def approach_A1(data, RR, group, groupLabel, sampleNum):
-    """ Perform classification approach A1, using 1D histograms and the XGBoost model
-    Based on user input to construct 1D conductance histograms
-    Then use XGBoost model for the training and testing histograms, resulting in confusion matrices
+def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
+    """ Extracts an intermediate layer of the CNN model
+    To obtain features extracted from the intermediate layer of the CNN model
+ 
+    Parameters
+    ----------
+    num_group: integer
+        Number of groups that are prepared for classification
+        Several Datasets (under the same group) can have the same label
+    Train_Data: numpy array 
+        2D array with 1D conductance histograms for training
+        Or 3D array with 2D conductance histograms for training
+    Train_Label: numpy array
+        1D array with labels of training data
+    Test_Data: numpy array
+        2D array with 1D conductance histograms for testing
+        Or 3D array with 2D conductance histograms for testing
+    Test_Label: numpy array
+        1D array with labels of testing data
+    
+    Returns
+    -------
+    cnn_interLayer_model: Keras
+        A CNN model ending at the layer of 'dense_1'
+        The intermediate Keras model was used to extract features from the CNN
+    
+    """
+    model = cnn(input_shape = (np.shape(Train_Data)[1], np.shape(Train_Data)[2], 1), num_group=num_group)
+    mcp_save = ModelCheckpoint('./Result/', save_best_only=True, monitor='val_accuracy', mode='max')
+    history = model.fit(Train_Data, Train_Label, epochs = 20, batch_size = 32, callbacks = [mcp_save], 
+                        validation_data = (Test_Data, Test_Label), verbose = 0)
+    model = load_model('./Result/', compile = False)
+    model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    cnn_interLayer_model = Model(inputs=model.input, outputs=model.get_layer('dense_1').output)
+
+    return cnn_interLayer_model
+        
+def runClassifier(approach, data, RR, group, num_group, sampleNum):
+    """ Perform classification using one of approach A1, A2, A3, or A4
+    Using 1D/2D histograms and the XGBoost/XGBoost+CNN model
     
     Parameters
     ----------
+    approach:
+        The approach going to be used for classification 
     data: list of string
         Each string in the list contains the directory of one Dataset
     RR: numpy array
         1D array with experimental parameters "Ramp Rate" for each Dataset
     group: list of integer
         2D array with the indexes of Datasets that are prepared for classification 
-    groupLabel: list of integer
-        1D array with the labels of Datasets that are prepared for classification
-        Several Datasets can have the same label
+    num_group: integer
+        Number of groups that are prepared for classification
+        Several Datasets (under the same group) can have the same label
     sampleNum: integer 
         Number of sampled traces to create one histogram
     
@@ -334,44 +381,49 @@ def approach_A1(data, RR, group, groupLabel, sampleNum):
         Averaged result of 100 iterations
 
     """
-    # Define the parameters for approach A1
-    averageHist = False
-    dimension = 1
+    # Define the parameters for the approach
+    approach = int(approach)
+    match approach:
+        case 1: # Approach A1 is 1D histograms with XGBoost model
+            averageHist = False
+            dimension = 1
+        case 2: # Approach A2 is 1D averaged histograms with XGBoost model
+            averageHist = True
+            dimension = 1
+        case 3: # Approach A3 is 2D histograms with XGBoost+CNN model
+            averageHist = False
+            dimension = 2
+        case 4: # Approach A4 is 2D averaged histograms with XGBoost+CNN model
+            averageHist = True
+            dimension = 2
 
     # Perform the same classification model for 100 iterations
     print('Start classification ...')
     conf_mat = 0
     for simIndex in range(100):
-        # Generate 1D histograms
-        Train_Data, Train_Label, Test_Data, Test_Label = histData(data, RR, group, groupLabel, averageHist, dimension, sampleNum)
+        # Generate histograms
+        Train_Data, Train_Label, Test_Data, Test_Label = histData(data, RR, group, num_group, averageHist, dimension, sampleNum)
+    
+        # Perform classification with XGBoost/XGBoost+CNN model
+        if dimension == 1: 
+            # Directly use XGBoost model 
+            xgb_model = XGBClassifier(n_estimators=2, max_depth=200, verbosity = 0)
+            xgb_model.fit(Train_Data, Train_Label)
+            predictedLabels = xgb_model.predict(Test_Data)
+        elif dimension == 2:
+            # First use CNN model for per-training
+            cnn_interLayer_model = cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label)
+            xgb_Train_Data = cnn_interLayer_model.predict(Train_Data, verbose = 0)
+            xgb_Test_Data = cnn_interLayer_model.predict(Test_Data, verbose = 0)
+            # Then use the extracted features for XGBoost model 
+            xgb_model = XGBClassifier(n_estimators=2, max_depth=200, objective='multi:softprob', tree_method='hist', verbosity = 0)
+            xgb_model.fit(xgb_Train_Data, Train_Label)
+            predictedLabels = xgb_model.predict(xgb_Test_Data)
 
-        # Perform classification with XGBoost
-        model = XGBClassifier(max_depth=200, n_estimators=2, verbosity = 0)
-        model.fit(Train_Data, Train_Label)
-        predictedLabels = model.predict(Test_Data)
-
-        # save classification result as confusino matrix
+        # save classification result as a confusion matrix
         conf_mat = conf_mat + confusion_matrix(Test_Label, predictedLabels)
-        if (simIndex+1) % 10 == 0:
+        if (simIndex+1) % 1 == 0:
             print('    Finished iteration ', simIndex+1)
-    return conf_mat
-
-def cnn_intermediate(cnn_model, layer_name):
-    intermediate_layer_model = Model(inputs=cnn_model.input,
-                                     outputs=cnn_model.get_layer(layer_name).output)
-    return intermediate_layer_model
-
-def xgboost_model(x_train, y_train, num_class, cnn_model = None, layer_name = None, intermediate_layer_model=None):
-    if intermediate_layer_model is None:
-        intermediate_layer_model = cnn_intermediate(cnn_model, layer_name)
-    xgbmodel = XGBClassifier(n_estimators = 2, max_depth = 200, objective='multi:softprob',
-                            num_class=num_class, tree_method='hist')
-    xgb_train = intermediate_layer_model.predict(x_train)
-    xgbmodel.train(xgb_train, y_train)
-    return xgbmodel
-
-def xgboost_result(x_test, y_test, xgboost, intermediate_layer_model):
-    xgb_test = intermediate_layer_model.predict(x_test)
-    xgb_result = xgboost.predict(xgb_test)
-    conf_mat = confusion_matrix(xgb_result,y_test)
+    
+    conf_mat = conf_mat / np.sum(conf_mat[0,:])
     return conf_mat
