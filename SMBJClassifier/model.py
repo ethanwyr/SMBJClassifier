@@ -301,7 +301,7 @@ def cnn(input_shape, num_group):
         A CNN model prepared for later classification
     
     """
-    Sequential([
+    cnn_model = Sequential([
         Conv2D(32, kernel_size = 3, padding = 'same', input_shape = input_shape),
         BatchNormalization(),
         ReLU(),
@@ -350,7 +350,7 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
     """
     model = cnn(input_shape = (np.shape(Train_Data)[1], np.shape(Train_Data)[2], 1), num_group=num_group)
     mcp_save = ModelCheckpoint('./Result/', save_best_only=True, monitor='val_accuracy', mode='max')
-    history = model.fit(Train_Data, Train_Label, epochs = 20, batch_size = 32, callbacks = [mcp_save], 
+    history = model.fit(Train_Data, Train_Label, epochs = 30, batch_size = 32, callbacks = [mcp_save], 
                         validation_data = (Test_Data, Test_Label), verbose = 0)
     model = load_model('./Result/', compile = False)
     model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
