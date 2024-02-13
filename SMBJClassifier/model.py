@@ -301,17 +301,21 @@ def cnn(input_shape, num_group):
         A CNN model prepared for later classification
     
     """
-    cnn_model = Sequential([
-        Conv2D(16, kernel_size = 3, activation = 'relu', padding = 'same', name = 'conv_1', input_shape = input_shape),
-        MaxPooling2D(pool_size = 2, padding = 'same', name = 'pool_1'),
-        Dropout(0.5, name = 'dropout_1'),
-        Conv2D(32, kernel_size = 3, activation = 'relu', padding = 'same', name = 'conv_2'),
-        MaxPooling2D(pool_size = 2, padding = 'same', name = 'pool_2'),
-        BatchNormalization(input_shape = input_shape, name = 'norm_1'),
-        Dropout(0.5, name = 'dropout_2'),
+    Sequential([
+        Conv2D(32, kernel_size = 3, padding = 'same', input_shape = input_shape),
+        BatchNormalization(),
+        ReLU(),
+        MaxPooling2D(pool_size = 2, padding = 'same'),
+
+        Conv2D(64, kernel_size = 3, padding = 'same'),
+        BatchNormalization(),
+        ReLU(),
+        MaxPooling2D(pool_size = 2, padding = 'same',),
+
+
         Flatten(name = 'flatten'),
-        Dense(64, activation = 'relu',name='dense_1'),
-        Dense(128, activation = 'relu',name='dense_2')
+        Dense(64, name='dense_1'),
+        Dense(32, name='dense_2')
     ])
     cnn_model.add(Dense(num_group, activation = 'softmax', name = 'dense_classification'))
     cnn_model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -419,7 +423,7 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
             xgb_Train_Data = cnn_interLayer_model.predict(Train_Data, verbose = 0)
             xgb_Test_Data = cnn_interLayer_model.predict(Test_Data, verbose = 0)
             # Then use the extracted features for XGBoost model 
-            xgb_model = XGBClassifier(n_estimators=2, max_depth=200, objective='multi:softprob', tree_method='hist', verbosity = 0)
+            xgb_model = XGBClassifier(max_depth=200, objective='multi:softprob', tree_method='hist', verbosity = 0)
             xgb_model.fit(xgb_Train_Data, Train_Label)
             predictedLabels = xgb_model.predict(xgb_Test_Data)
 
