@@ -8,9 +8,10 @@ import numpy as np
 from scipy.io import loadmat, savemat
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.metrics import confusion_matrix
+import xgboost
 from xgboost import XGBClassifier
 import tensorflow
-from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization, ReLU
 from keras.models import Model, Sequential, load_model
 from keras.callbacks import ModelCheckpoint
 
@@ -302,16 +303,19 @@ def cnn(input_shape, num_group):
     
     """
     cnn_model = Sequential([
-        Conv2D(16, kernel_size = 3, activation = 'relu', padding = 'same', name = 'conv_1', input_shape = input_shape),
-        MaxPooling2D(pool_size = 2, padding = 'same', name = 'pool_1'),
-        Dropout(0.5, name = 'dropout_1'),
-        Conv2D(32, kernel_size = 3, activation = 'relu', padding = 'same', name = 'conv_2'),
-        MaxPooling2D(pool_size = 2, padding = 'same', name = 'pool_2'),
-        BatchNormalization(input_shape = input_shape, name = 'norm_1'),
-        Dropout(0.5, name = 'dropout_2'),
+        Conv2D(32, kernel_size = 3, padding = 'same', kernel_regularizer = l2(0.0005), input_shape = input_shape),
+        BatchNormalization(),
+        ReLU(),
+        MaxPooling2D(pool_size = 2, padding = 'same'),
+        Conv2D(64, kernel_size = 3, kernel_regularizer = l2(0.0005), padding = 'same'),
+        BatchNormalization(),
+        ReLU(),
+        MaxPooling2D(pool_size = 2, padding = 'same'),
         Flatten(name = 'flatten'),
-        Dense(64, activation = 'relu',name='dense_1'),
-        Dense(128, activation = 'relu',name='dense_2')
+        Dense(64, name='dense_1'),
+        ReLU(),
+        Dense(32, name='dense_2'),
+        ReLU()
     ])
     cnn_model.add(Dense(num_group, activation = 'softmax', name = 'dense_classification'))
     cnn_model.compile(optimizer='Adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -345,12 +349,12 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
     
     """
     model = cnn(input_shape = (np.shape(Train_Data)[1], np.shape(Train_Data)[2], 1), num_group=num_group)
-    mcp_save = ModelCheckpoint('./Result/', save_best_only=True, monitor='val_accuracy', mode='max')
+    mcp_save = ModelCheckpoint('./Result/', save_best_only=True, monitor='val_loss', mode='min')
     history = model.fit(Train_Data, Train_Label, epochs = 20, batch_size = 32, callbacks = [mcp_save], 
                         validation_data = (Test_Data, Test_Label), verbose = 0)
     model = load_model('./Result/', compile = False)
     model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    cnn_interLayer_model = Model(inputs=model.input, outputs=model.get_layer('dense_1').output)
+    cnn_interLayer_model = Model(inputs=model.input, outputs=model.get_layer('flatten').output)
 
     return cnn_interLayer_model
         
@@ -414,14 +418,22 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
             xgb_model.fit(Train_Data, Train_Label)
             predictedLabels = xgb_model.predict(Test_Data)
         elif dimension == 2:
-            # First use CNN model for per-training
+            # First use CNN model for pre-training
             cnn_interLayer_model = cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label)
             xgb_Train_Data = cnn_interLayer_model.predict(Train_Data, verbose = 0)
             xgb_Test_Data = cnn_interLayer_model.predict(Test_Data, verbose = 0)
             # Then use the extracted features for XGBoost model 
-            xgb_model = XGBClassifier(n_estimators=2, max_depth=200, objective='multi:softprob', tree_method='hist', verbosity = 0)
-            xgb_model.fit(xgb_Train_Data, Train_Label)
-            predictedLabels = xgb_model.predict(xgb_Test_Data)
+            params = {
+                'objective': 'multi:softmax',
+                'num_class': len(variants),
+                'tree_method': 'hist',
+                'max_depth': 10,
+                'verbosity': 1
+            }
+            xgb_Train = xgboost.DMatrix(xgb_Train_Data, label = Train_Label)
+            xgb_Test = xgboost.DMatrix(xgb_Test_Data, label = Test_Label)
+            xgb_model = xgboost.train(params, xgb_Train, num_boost_round = 150, early_stopping_rounds=10, evals = [(dtrain, 'train'), (dtest, 'valid')])
+            predictedLabels = xgb_model.predict(xgb_Test)
 
         # save classification result as a confusion matrix
         conf_mat = conf_mat + confusion_matrix(Test_Label, predictedLabels)
