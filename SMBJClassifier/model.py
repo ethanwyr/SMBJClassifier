@@ -414,7 +414,7 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
         # Perform classification with XGBoost/XGBoost+CNN model
         if dimension == 1: 
             # Directly use XGBoost model 
-            xgb_model = XGBClassifier(n_estimators=2, max_depth=200, verbosity = 0)
+            xgb_model = XGBClassifier(n_estimators=200, max_depth=2, verbosity = 0)
             xgb_model.fit(Train_Data, Train_Label)
             predictedLabels = xgb_model.predict(Test_Data)
         elif dimension == 2:
