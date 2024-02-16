@@ -422,18 +422,11 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
             cnn_interLayer_model = cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label)
             xgb_Train_Data = cnn_interLayer_model.predict(Train_Data, verbose = 0)
             xgb_Test_Data = cnn_interLayer_model.predict(Test_Data, verbose = 0)
-            # Then use the extracted features for XGBoost model 
-            params = {
-                'objective': 'multi:softmax',
-                'num_class': len(variants),
-                'tree_method': 'hist',
-                'max_depth': 10,
-                'verbosity': 1
-            }
-            xgb_Train = xgboost.DMatrix(xgb_Train_Data, label = Train_Label)
-            xgb_Test = xgboost.DMatrix(xgb_Test_Data, label = Test_Label)
-            xgb_model = xgboost.train(params, xgb_Train, num_boost_round = 150, early_stopping_rounds=10, evals = [(dtrain, 'train'), (dtest, 'valid')])
-            predictedLabels = xgb_model.predict(xgb_Test)
+            xgb_model = XGBClassifier(objective='multi:softmax', num_class=num_group, tree_method='hist', max_depth=2,verbosity=0, n_estimators=200)
+
+          # Train the model
+            xgb_model.fit(xgb_Train_Data, Train_Label, early_stopping_rounds=10)
+            predictedLabels = xgb_model.predict(xgb_Test_Data)
 
         # save classification result as a confusion matrix
         conf_mat = conf_mat + confusion_matrix(Test_Label, predictedLabels)
