@@ -350,7 +350,7 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
     """
     model = cnn(input_shape = (np.shape(Train_Data)[1], np.shape(Train_Data)[2], 1), num_group=num_group)
     mcp_save = ModelCheckpoint('./Result/', save_best_only=True, monitor='val_loss', mode='min')
-    history = model.fit(Train_Data, Train_Label, epochs = 30, batch_size = 32, callbacks = [mcp_save], 
+    history = model.fit(Train_Data, Train_Label, epochs = 40, batch_size = 32, callbacks = [mcp_save], 
                         validation_data = (Test_Data, Test_Label), verbose = 0)
     model = load_model('./Result/', compile = False)
     model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
