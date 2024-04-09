@@ -103,8 +103,9 @@ Alpha_MM1 has Datasets: E1, E2, E3, E4, E5
 Alpha_MM2 has Datasets: E6, E7, E8, E9, E10   
 Alpha_PM has Datasets: E11, E12, E13, E14, E15   
 
+        ### group = [group_1, group_2, group_3]
+        ### group_1 is Alpha_MM1, group_2 is Alpha_MM2, group_3 is Alpha_PM
         group = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
-
 
 4. The approach going to be used for classification.  
 Approach A1 is 1D histograms with XGBoost model.  

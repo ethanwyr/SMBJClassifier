@@ -13,6 +13,7 @@ from xgboost import XGBClassifier
 import tensorflow
 from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization, ReLU
 from keras.models import Model, Sequential, load_model
+from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint
 
 def generate_1d_histogram(data, RR, d, inputName, para, 

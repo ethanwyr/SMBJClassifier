@@ -15,6 +15,7 @@ def main():
     """ Read basic information from text files 
     In this example, we only include COVID Alpha variants
     """
+    ### Here are the lines users should modify. ###
     filename = 'COVID_Strand_Source.txt'
     Expfile = 'COVID_Exp_parameter.mat'
     data, Amp, Freq, RR, Vbias = DPP.readInfo(filename, Expfile)
@@ -33,6 +34,7 @@ def main():
     Then use XGBoost/CNN+XGBoost model for the training and testing histograms
     There are 5 different parameters that could be modified by the user, based on input Datasets
     """
+    ### Here are the lines users should modify. ###
     # 1. Number of groups for classification 
     num_group = 3
     # 2. Name of each group for classification 
