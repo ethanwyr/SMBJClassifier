@@ -426,7 +426,7 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
             xgb_model = XGBClassifier(objective='multi:softmax', num_class=num_group, tree_method='hist', max_depth=2,verbosity=0, n_estimators=200)
 
           # Train the model
-            xgb_model.fit(xgb_Train_Data, Train_Label, early_stopping_rounds=10)
+            xgb_model.fit(xgb_Train_Data, Train_Label)
             predictedLabels = xgb_model.predict(xgb_Test_Data)
 
         # save classification result as a confusion matrix
