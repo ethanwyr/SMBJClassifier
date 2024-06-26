@@ -357,8 +357,7 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
                         validation_data = (Test_Data, Test_Label), verbose = 0)
     model = load_model('./Result.keras', compile = False)
     model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    cnn_interLayer_model = Model(inputs=model.input, outputs=model.get_layer('flatten').output)
-
+    cnn_interLayer_model = Model(model.get_layer('conv2d').input, outputs=model.get_layer('flatten').output)
     return cnn_interLayer_model
         
 def runClassifier(approach, data, RR, group, num_group, sampleNum):
