@@ -166,6 +166,7 @@ def generate_2d_histogram(data, RR, d, inputName, para,
         D = []
         for j in range(sampleNum): 
             cond = cond_train[idx[j]]
+            cond = np.squeeze(np.array([c[1:] for c in cond]))
             dist = dist_train[idx[j]]
             G = np.append(G, cond)
             D = np.append(D, dist)
@@ -183,6 +184,7 @@ def generate_2d_histogram(data, RR, d, inputName, para,
         D = []
         for j in range(sampleNum): 
             cond = cond_test[idx[j]]
+            cond = np.squeeze(np.array([c[1:] for c in cond]))
             dist = dist_test[idx[j]]
             G = np.append(G, cond)
             D = np.append(D, dist)
