@@ -77,6 +77,7 @@ def generate_1d_histogram(data, RR, d, inputName, para,
         G = []
         for j in range(sampleNum): 
             cond = cond_train[idx[j]]
+            cond = np.squeeze(cond)
             G = np.append(G, cond)
         P, _ = np.histogram(G, bins=condEdges)
         P = P / np.sum(P)
@@ -91,6 +92,7 @@ def generate_1d_histogram(data, RR, d, inputName, para,
         G = []
         for j in range(sampleNum):
             cond = cond_test[idx[j]]
+            cond = np.squeeze(cond)
             G = np.append(G, cond)
         P, _ = np.histogram(G, bins=condEdges)
         P = P / sum(P)
@@ -165,6 +167,7 @@ def generate_2d_histogram(data, RR, d, inputName, para,
         D = []
         for j in range(sampleNum): 
             cond = cond_train[idx[j]]
+            cond = np.squeeze(cond)
             dist = dist_train[idx[j]]
             G = np.append(G, cond)
             D = np.append(D, dist)
@@ -182,6 +185,7 @@ def generate_2d_histogram(data, RR, d, inputName, para,
         D = []
         for j in range(sampleNum): 
             cond = cond_test[idx[j]]
+            cond = np.squeeze(cond)
             dist = dist_test[idx[j]]
             G = np.append(G, cond)
             D = np.append(D, dist)
