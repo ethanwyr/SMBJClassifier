@@ -11,10 +11,11 @@ from sklearn.metrics import confusion_matrix
 import xgboost
 from xgboost import XGBClassifier
 import tensorflow
-from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, BatchNormalization, ReLU
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Input, BatchNormalization, ReLU
 from keras.models import Model, Sequential, load_model
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint
+from sklearn.utils import shuffle
 
 def generate_1d_histogram(data, RR, d, inputName, para, 
                           TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum):
@@ -308,7 +309,8 @@ def cnn(input_shape, num_group):
     
     """
     cnn_model = Sequential([
-        Conv2D(32, kernel_size = 3, padding = 'same', kernel_regularizer = l2(0.0005), input_shape = input_shape),
+        Input(input_shape),
+        Conv2D(32, kernel_size = 3, padding = 'same', kernel_regularizer = l2(0.0005)),
         BatchNormalization(),
         ReLU(),
         MaxPooling2D(pool_size = 2, padding = 'same'),
@@ -354,13 +356,12 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
     
     """
     model = cnn(input_shape = (np.shape(Train_Data)[1], np.shape(Train_Data)[2], 1), num_group=num_group)
-    mcp_save = ModelCheckpoint('./Result/', save_best_only=True, monitor='val_loss', mode='min')
-    history = model.fit(Train_Data, Train_Label, epochs = 40, batch_size = 32, callbacks = [mcp_save], 
+    mcp_save = ModelCheckpoint('./Result.keras', save_best_only=True, monitor='val_loss', mode='min')
+    history = model.fit(Train_Data, Train_Label, epochs = 50, batch_size = 32, callbacks = [mcp_save], 
                         validation_data = (Test_Data, Test_Label), verbose = 0)
-    model = load_model('./Result/', compile = False)
+    model = load_model('./Result.keras', compile = False)
     model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    cnn_interLayer_model = Model(inputs=model.input, outputs=model.get_layer('flatten').output)
-
+    cnn_interLayer_model = Model(model.get_layer('conv2d').input, outputs=model.get_layer('flatten').output)
     return cnn_interLayer_model
         
 def runClassifier(approach, data, RR, group, num_group, sampleNum):
@@ -415,7 +416,7 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
     for simIndex in range(100):
         # Generate histograms
         Train_Data, Train_Label, Test_Data, Test_Label = histData(data, RR, group, num_group, averageHist, dimension, sampleNum)
-    
+        Train_Data, Train_Label = shuffle(Train_Data, Train_Label)
         # Perform classification with XGBoost/XGBoost+CNN model
         if dimension == 1: 
             # Directly use XGBoost model 
