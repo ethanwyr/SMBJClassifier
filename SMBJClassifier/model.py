@@ -356,12 +356,12 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
     
     """
     model = cnn(input_shape = (np.shape(Train_Data)[1], np.shape(Train_Data)[2], 1), num_group=num_group)
-    mcp_save = ModelCheckpoint('./Result.keras', save_best_only=True, monitor='val_loss', mode='min')
-    history = model.fit(Train_Data, Train_Label, epochs = 50, batch_size = 32, callbacks = [mcp_save], 
+    mcp_save = ModelCheckpoint('./Result/model.keras', save_best_only=True, monitor='val_loss', mode='min')
+    history = model.fit(Train_Data, Train_Label, epochs = 40, batch_size = 32, callbacks = [mcp_save], 
                         validation_data = (Test_Data, Test_Label), verbose = 0)
-    model = load_model('./Result.keras', compile = False)
+    model = load_model('./Result/model.keras', compile = False)
     model.compile(optimizer='Adam',loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    cnn_interLayer_model = Model(model.get_layer('conv2d').input, outputs=model.get_layer('flatten').output)
+    cnn_interLayer_model = Model(inputs=model.input, outputs=model.get_layer('flatten').output)
     return cnn_interLayer_model
         
 def runClassifier(approach, data, RR, group, num_group, sampleNum):
@@ -428,9 +428,9 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
             cnn_interLayer_model = cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label)
             xgb_Train_Data = cnn_interLayer_model.predict(Train_Data, verbose = 0)
             xgb_Test_Data = cnn_interLayer_model.predict(Test_Data, verbose = 0)
-            xgb_model = XGBClassifier(objective='multi:softmax', num_class=num_group, tree_method='hist', max_depth=2,verbosity=0, n_estimators=200)
+            xgb_model = XGBClassifier(objective='multi:softmax', num_class=num_group, tree_method='hist', max_depth=2, verbosity=0, n_estimators=200)
 
-          # Train the model
+            # Train the model
             xgb_model.fit(xgb_Train_Data, Train_Label)
             predictedLabels = xgb_model.predict(xgb_Test_Data)
 
