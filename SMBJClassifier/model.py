@@ -61,8 +61,8 @@ def generate_1d_histogram(data, RR, d, inputName, para,
         # load conductance traces of one Dataset
         # split the data into training and testing traces 
         matData = loadmat('./Data/' + data[int(i)] + inputName + '_' + para + '.mat')
-        Data_LPF = matData['Data_LPF'][0]
-        ctr, cte = train_test_split(Data_LPF, test_size=TEST_FRACTION)
+        Data = matData[inputName][0]
+        ctr, cte = train_test_split(Data, test_size=TEST_FRACTION)
         cond_train.extend(ctr)
         cond_test.extend(cte)
     
@@ -147,8 +147,8 @@ def generate_2d_histogram(data, RR, d, inputName, para,
         # load conductance traces of one Dataset
         # split the data into training and testing traces 
         matData = loadmat('./Data/' + data[int(i)] + inputName + '_' + para + '.mat')
-        Data_LPF = matData['Data_LPF'][0]
-        ctr, cte = train_test_split(Data_LPF, test_size=TEST_FRACTION)
+        Data = matData[inputName][0]
+        ctr, cte = train_test_split(Data, test_size=TEST_FRACTION)
         cond_train.extend(ctr)
         cond_test.extend(cte)
         dist_train.extend([np.arange(len(c1[0])) * 1e-4 * RR[int(i)] for c1 in ctr])
@@ -196,7 +196,7 @@ def generate_2d_histogram(data, RR, d, inputName, para,
     
     return data_train_hist, data_test_hist
 
-def histData(data, RR, group, num_group, averageHist, dimension, sampleNum):
+def histData(data, RR, group, num_group, averageHist, dimension, sampleNum, pla):
     """ Generate Training Data & Label, Testing Data & Label in format of 1D/2D conductance histograms
     
     Parameters
@@ -216,6 +216,8 @@ def histData(data, RR, group, num_group, averageHist, dimension, sampleNum):
         One integer to determine whether generating 1D or 2D histograms
     sampleNum: integer 
         Number of sampled traces to create one histogram
+    pla: boolean
+        True, if applying Piecewise Linear Approximation (PLA) method
     
     Returns
     -------
@@ -236,8 +238,12 @@ def histData(data, RR, group, num_group, averageHist, dimension, sampleNum):
     sampleNum = int(sampleNum)
 
     ## Define the following parameters for constructing histograms 
-    inputName = 'Data_LPF'    # Name of data files that contain the preprocessed conductance traces
-    R2_value = 'R95'          # R square value for classification 
+    if (pla):
+        inputName = 'Data_CC'       # Name of data files that contain the preprocessed conductance traces
+        cutoff_value = '4'          # cutoff slope parameter of PLA for classification 
+    else:
+        inputName = 'Data_LPF'      # Name of data files that contain the preprocessed conductance traces
+        cutoff_value = 'R95'        # R square value for classification 
     TEST_FRACTION = 0.3       # Portion of testing data occupied in the entire Dataset
     trailNum = 500            # Number of total histograms per Dataset
     
@@ -270,7 +276,7 @@ def histData(data, RR, group, num_group, averageHist, dimension, sampleNum):
     if averageHist:
         # Create averaged (probability distribution of) conductance histograms across several Datasets within the same variant
         for g in range(num_group):
-            data_train_hist, data_test_hist = fun_hist(data, RR, group[g], inputName, R2_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
+            data_train_hist, data_test_hist = fun_hist(data, RR, group[g], inputName, cutoff_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
             Train_Data.extend(data_train_hist)
             Train_Label.extend(np.ones(len(data_train_hist), dtype=np.integer) * g)
             Test_Data.extend(data_test_hist)
@@ -279,7 +285,7 @@ def histData(data, RR, group, num_group, averageHist, dimension, sampleNum):
         # Create individual conductance histograms for each Dataset within the same variant
         for g in range(num_group):
             for d in group[g]:
-                data_train_hist, data_test_hist = fun_hist(data, RR, [d], inputName, R2_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
+                data_train_hist, data_test_hist = fun_hist(data, RR, [d], inputName, cutoff_value, TEST_FRACTION, condEdges, distEdges, trailNum, sampleNum)
                 Train_Data.extend(data_train_hist)
                 Train_Label.extend(np.ones(len(data_train_hist), dtype=np.integer) * g)
                 Test_Data.extend(data_test_hist)
@@ -365,12 +371,16 @@ def cnn_pretrain(num_group, Train_Data, Train_Label, Test_Data, Test_Label):
     return cnn_interLayer_model
         
 def runClassifier(approach, data, RR, group, num_group, sampleNum):
-    """ Perform classification using one of approach A1, A2, A3, or A4
+    """ Perform classification using one of approach A1, A2, A3, A4
+    Using 1D/2D histograms and the XGBoost/XGBoost+CNN model
+    
+    OR using Piecewise Linear Approximation (PLA) with one of 
+    approach A5, A6, A7, A8
     Using 1D/2D histograms and the XGBoost/XGBoost+CNN model
     
     Parameters
     ----------
-    approach:
+    approach: integer
         The approach going to be used for classification 
     data: list of string
         Each string in the list contains the directory of one Dataset
@@ -393,29 +403,58 @@ def runClassifier(approach, data, RR, group, num_group, sampleNum):
     """
     # Define the parameters for the approach
     approach = int(approach)
+    pla = False
     if approach == 1:
         # Approach A1 is 1D histograms with XGBoost model
+        # No PLA applied 
         averageHist = False
         dimension = 1
     elif approach == 2: 
         # Approach A2 is 1D averaged histograms with XGBoost model
+        # No PLA applied 
         averageHist = True
         dimension = 1
     elif approach == 3: 
         # Approach A3 is 2D histograms with XGBoost+CNN model
+        # No PLA applied 
         averageHist = False
         dimension = 2
     elif approach == 4: 
         # Approach A4 is 2D averaged histograms with XGBoost+CNN model
+        # No PLA applied 
         averageHist = True
         dimension = 2
+    elif approach == 5:
+        # Approach A5 is 1D histograms with XGBoost model
+        # Applied PLA for preprocessing
+        averageHist = False
+        dimension = 1
+        pla = True
+    elif approach == 6: 
+        # Approach A6 is 1D averaged histograms with XGBoost model
+        # Applied PLA for preprocessing
+        averageHist = True
+        dimension = 1
+        pla = True
+    elif approach == 7: 
+        # Approach A7 is 2D histograms with XGBoost+CNN model
+        # Applied PLA for preprocessing
+        averageHist = False
+        dimension = 2
+        pla = True
+    elif approach == 8: 
+        # Approach A8 is 2D averaged histograms with XGBoost+CNN model
+        # Applied PLA for preprocessing
+        averageHist = True
+        dimension = 2
+        pla = True
 
     # Perform the same classification model for 100 iterations
     print('Start classification ...')
     conf_mat = 0
     for simIndex in range(100):
         # Generate histograms
-        Train_Data, Train_Label, Test_Data, Test_Label = histData(data, RR, group, num_group, averageHist, dimension, sampleNum)
+        Train_Data, Train_Label, Test_Data, Test_Label = histData(data, RR, group, num_group, averageHist, dimension, sampleNum, pla)
         Train_Data, Train_Label = shuffle(Train_Data, Train_Label)
         # Perform classification with XGBoost/XGBoost+CNN model
         if dimension == 1: 

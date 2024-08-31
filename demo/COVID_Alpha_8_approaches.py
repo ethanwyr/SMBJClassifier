@@ -9,7 +9,7 @@ os.chdir(os.path.dirname(__file__))
 # Import SMBJClassifier from upper directory
 import sys
 sys.path.append('..')
-from SMBJClassifier import DPP, model
+from SMBJClassifier import DPP, model, PLA
 
 def main():
     """ Read basic information from text files 
@@ -24,9 +24,11 @@ def main():
     """ Perform data preprocessing
     Convert current traces into conductance traces by applying high/low clip,
     R square value cutoff, and low pass filter.
+    Or Piecewise Linear Approximation (PLA)
     """
     ### This preprocessing step only needs to be performed once ###
-    DPP.createCondTrace(data, Amp, Freq, Vbias)
+    # DPP.createCondTrace(data, Amp, Freq, Vbias)
+    PLA.createCondTrace_PLA(data, Amp, Freq, RR, Vbias)
 
 
     """ Perform Machine learning classification 
@@ -42,8 +44,10 @@ def main():
     # 3. The indexes of Datasets that are prepared for classification
     group = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15]]
     # 4. The approach going to be used for classification 
-    #    In the paper, we tested all approaches: [1, 2, 3, 4]
-    approach = [2]
+    #    In the paper, we tested all approaches: [1, 2, 3, 4, 5, 6, 7, 8]
+    #    approaches [1, 2, 3, 4] doesn't use PLA
+    #    approaches [5, 6, 7, 8] use PLA
+    approach = [6]
     # 5. Number of sampled traces to create one histogram
     #    In the paper, we tested it with a range of sample sizes: [10, 20, 30, 40, 50]
     sampleNum = [30]
