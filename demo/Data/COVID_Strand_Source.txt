@@ -15,3 +15,78 @@
 13 = COVID_Alpha/PerfectMatch/Vbias_100mV_Amp_1nAV_RampRate_20_Freq_10kHz/
 14 = COVID_Alpha/PerfectMatch/Vbias_100mV_Amp_10nAV_RampRate_10_Freq_10kHz/
 15 = COVID_Alpha/PerfectMatch/Vbias_200mV_Amp_10nAV_RampRate_10_Freq_10kHz/
+
+
+16 = COVID_Beta/MisMatch_1/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+17 = COVID_Beta/MisMatch_1/Vbias_50mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+18 = COVID_Beta/MisMatch_1/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+
+19 = COVID_Beta/MisMatch_2/Vbias_300mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+20 = COVID_Beta/MisMatch_2/Vbias_300mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+21 = COVID_Beta/MisMatch_2/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+
+22 = COVID_Beta/MisMatch_3/Vbias_50mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+23 = COVID_Beta/MisMatch_3/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+24 = COVID_Beta/MisMatch_3/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+
+25 = COVID_Beta/PerfectMatch/Vbias_50mV_Amp_1nAV_RampRate_20_Freq_10kHz/
+26 = COVID_Beta/PerfectMatch/Vbias_100mV_Amp_1nAV_RampRate_20_Freq_10kHz/
+27 = COVID_Beta/PerfectMatch/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+
+
+28 = 
+29 = 
+30 = 
+31 = 
+
+32 = 
+33 = 
+34 = 
+35 = 
+36 = 
+37 = 
+
+
+38 = 
+39 = 
+40 = 
+
+41 = 
+42 = 
+43 = 
+
+
+44 = 
+45 = 
+46 = 
+47 = 
+48 = 
+49 = 
+50 = 
+
+
+51 = COVID_Delta/MisMatch_1/Vbias_30mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+52 = COVID_Delta/MisMatch_1/Vbias_30mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+53 = COVID_Delta/MisMatch_1/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+54 = COVID_Delta/MisMatch_1/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+
+55 = COVID_Delta/MisMatch_2/Vbias_30mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+56 = COVID_Delta/MisMatch_2/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+57 = COVID_Delta/MisMatch_2/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+58 = COVID_Delta/MisMatch_2/Vbias_200mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+
+59 = COVID_Delta/PerfectMatch/Vbias_30mV_Amp_10nAV_RampRate_20_Freq_10kHz_A/
+60 = COVID_Delta/PerfectMatch/Vbias_30mV_Amp_10nAV_RampRate_20_Freq_10kHz_B/
+61 = COVID_Delta/PerfectMatch/Vbias_100mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+62 = COVID_Delta/PerfectMatch/Vbias_200mV_Amp_10nAV_RampRate_20_Freq_10kHz/
+
+
+63 = 
+64 = 
+65 = 
+66 = 
+
+67 = 
+68 = 
+69 = 
+70 = 
